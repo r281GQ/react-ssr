@@ -1,28 +1,51 @@
-import express from 'express';
-
 import React from 'react';
-import ReactDomServer from 'react-dom/server';
+import { renderToString } from 'react-dom/server';
+import { StaticRouter } from 'react-router-dom';
+import { createStore, applyMiddleware, combineReducers } from 'redux';
+import { Provider } from 'react-redux';
 import Helmet from 'react-helmet';
 
 import ReactRoot from './src/index';
 
-const createTemplate = (helmet, html) =>
-  `<html><head>${helmet.meta.toString()}</head><body><div id="root">${html}</div><div>That is part of the original html!</div><script src="/assets/js/bundle.js"></script></body></html>`;
+import messageReducerConstructor from './src/reducers/message';
 
-const serveRoot = (request, response) => {
-  const reactElement = ReactDomServer.renderToString(<ReactRoot />);
+export default path => {
+  const store = createStore(
+    combineReducers({
+      message: messageReducerConstructor({
+        platform: 'server',
+        initialState: { text: 'Hello from the server!' }
+      })
+    })
+  );
+
+  const preloadedState = store.getState();
+
+  const reactHtml = renderToString(
+    <Provider store={store}>
+      <StaticRouter url={path} context={{}}>
+        <ReactRoot />
+      </StaticRouter>
+    </Provider>
+  );
 
   const helmet = Helmet.renderStatic();
 
-  const template = createTemplate(helmet, reactElement);
-
-  response.send(template);
+  return `
+    <html>
+      <head>
+        ${helmet.meta.toString()}
+      </head>
+      <body>
+        <div id="root">${reactHtml}</div>
+        <div>
+          That is part of the original html!
+        </div>
+        <script>window.__PRELOADED_STATE__ = ${JSON.stringify(
+          preloadedState
+        ).replace(/</g, '\\u003c')}</script>
+        <script src="/assets/js/bundle.js"></script>
+      </body>
+    </html>
+  `;
 };
-
-const app = express();
-
-app.use(express.static('public'));
-
-app.get('/', serveRoot);
-
-app.listen(3000, () => console.log('App started!'));

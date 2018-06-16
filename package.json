@@ -4,11 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js --exec babel-node --presets es2015,stage-2,react",
-    "serve": "nodemon --watch build --exec \"node  build/server.js\"",
-    "we": "webpack --config webpack.server.js --watch",
-    "wec": "webpack --config webpack.client.js --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "serve": "nodemon --watch build --exec \"node  build/index.js\"",
+    "web": "webpack --config webpack.server.js --watch",
+    "webclient": "webpack --config webpack.client.js --watch"
   },
   "author": "",
   "license": "ISC",
@@ -31,7 +29,11 @@
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
     "react-helmet": "^5.2.0",
+    "react-redux": "^5.0.7",
+    "react-router-dom": "^4.3.1",
     "reactdom": "^2.0.0",
+    "redux": "^4.0.0",
+    "redux-thunk": "^2.3.0",
     "webpack": "^4.12.0"
   },
   "devDependencies": {
