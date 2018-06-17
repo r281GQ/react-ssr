@@ -7,6 +7,7 @@ import Helmet from 'react-helmet';
 import thunk from 'redux-thunk';
 
 import ReactRoot from './src/index';
+import Stripe from './src/utils/Stripe';
 
 import messageReducerConstructor from './src/reducers/message';
 import postsReducerConstructor from './src/reducers/posts';
@@ -33,11 +34,13 @@ export default async path => {
   const preloadedState = store.getState();
 
   const reactHtml = renderToString(
-    <Provider store={store}>
-      <StaticRouter location={path} context={{}}>
-        <ReactRoot />
-      </StaticRouter>
-    </Provider>
+    <Stripe>
+      <Provider store={store}>
+        <StaticRouter location={path} context={{}}>
+          <ReactRoot />
+        </StaticRouter>
+      </Provider>
+    </Stripe>
   );
 
   const helmet = Helmet.renderStatic();

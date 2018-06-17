@@ -3,9 +3,11 @@ import ReactDom from 'react-dom';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+
 import thunk from 'redux-thunk';
 
 import ReactRoot from './src/index';
+import Stripe from './src/utils/Stripe';
 
 import messageReducerConstructor from './src/reducers/message';
 import postsReducerConstructor from './src/reducers/message';
@@ -31,10 +33,12 @@ const store = createStore(
 delete window.__PRELOADED_STATE__;
 
 ReactDom.hydrate(
-  <Provider store={store}>
-    <BrowserRouter>
-      <ReactRoot />
-    </BrowserRouter>
-  </Provider>,
+  <Stripe>
+    <Provider store={store}>
+      <BrowserRouter>
+        <ReactRoot />
+      </BrowserRouter>
+    </Provider>
+  </Stripe>,
   rootElement
 );
