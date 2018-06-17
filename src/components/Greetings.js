@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
+import styled from 'styled-components';
 import Helmet from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
+
+const PrimaryButton = styled.button`
+  background-color: palevioletred;
+  font-size: 30px;
+`;
 
 class Greetings extends Component {
   state = {
@@ -32,9 +38,11 @@ class Greetings extends Component {
         </button>
         <div>That comes from React Greetings!</div>
         {show && <div>Hello!</div>}
-        <button onClick={() => this.setState(({ show }) => ({ show: !show }))}>
+        <PrimaryButton
+          onClick={() => this.setState(({ show }) => ({ show: !show }))}
+        >
           Toggle message!
-        </button>
+        </PrimaryButton>
         <Link to="/counter">To Counter!</Link>
       </div>
     );

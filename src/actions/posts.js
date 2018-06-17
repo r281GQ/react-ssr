@@ -6,8 +6,9 @@ export const fetchPosts = () => async dispatch => {
       'https://jsonplaceholder.typicode.com/posts'
     );
     dispatch(writePosts(data));
-  } catch (e) {
-    console.log(e);
+  } catch ({ message }) {
+    console.log(message);
+    throw new Error(message);
   }
 };
 
