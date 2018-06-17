@@ -3,22 +3,29 @@ import ReactDom from 'react-dom';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import thunk from 'redux-thunk';
 
 import ReactRoot from './src/index';
 
 import messageReducerConstructor from './src/reducers/message';
+import postsReducerConstructor from './src/reducers/message';
 
 const rootElement = document.getElementById('root');
 
-const { message } = window.__PRELOADED_STATE__;
+const { message, posts } = window.__PRELOADED_STATE__;
 
 const store = createStore(
   combineReducers({
     message: messageReducerConstructor({
       platform: 'client',
       initialState: message
+    }),
+    posts: postsReducerConstructor({
+      platform: 'client',
+      initialState: posts
     })
-  })
+  }),
+  applyMiddleware(thunk)
 );
 
 delete window.__PRELOADED_STATE__;

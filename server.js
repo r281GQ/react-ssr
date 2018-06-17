@@ -4,26 +4,37 @@ import { StaticRouter } from 'react-router-dom';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import Helmet from 'react-helmet';
+import thunk from 'redux-thunk';
 
 import ReactRoot from './src/index';
 
 import messageReducerConstructor from './src/reducers/message';
+import postsReducerConstructor from './src/reducers/posts';
 
-export default path => {
+import { fetchPosts } from './src/actions/posts';
+
+export default async path => {
   const store = createStore(
     combineReducers({
       message: messageReducerConstructor({
         platform: 'server',
         initialState: { text: 'Hello from the server!' }
+      }),
+      posts: postsReducerConstructor({
+        platform: 'server',
+        initialState: []
       })
-    })
+    }),
+    applyMiddleware(thunk)
   );
+
+  await store.dispatch(fetchPosts());
 
   const preloadedState = store.getState();
 
   const reactHtml = renderToString(
     <Provider store={store}>
-      <StaticRouter url={path} context={{}}>
+      <StaticRouter location={path} context={{}}>
         <ReactRoot />
       </StaticRouter>
     </Provider>

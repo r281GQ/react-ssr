@@ -8,15 +8,12 @@ export default ({ platform, initialState }) => {
     throw new Error('Platform must be specified as either server or client');
   }
 
-  const defaultState =
-    platform === 'server' ? { text: 'Hello from the server!' } : initialState;
+  const defaultState = platform === 'server' ? [] : initialState;
 
   return (state = defaultState, { type, payload }) => {
     switch (type) {
-      case 'ADD':
-        return { text: payload };
-      case 'REMOVE':
-        return { text: '' };
+      case 'WRITE_POSTS':
+        return [...payload.posts];
       default:
         return state;
     }

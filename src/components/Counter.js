@@ -8,15 +8,24 @@ class Counter extends Component {
   };
 
   render = () => {
+    const { count } = this.state;
+    const { message } = this.props;
+
     return (
       <div>
         <Helmet>
           <meta name="title" content="React SSR Counter!" />
         </Helmet>
-        <div>{this.props.message}</div>
+        <div>{message}</div>
         <div>That comes from React Counter!</div>
-        <button onClick={() => this.setState({ count: this.state.count + 1 })}>
-          {this.state.count}
+        <button
+          onClick={() =>
+            this.setState(({ count }) => ({
+              count: count + 1
+            }))
+          }
+        >
+          {count}
         </button>
       </div>
     );
