@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 
 const PrimaryButton = styled.button`
-  background-color: palevioletred;
+  background-color: #1c1084;
   font-size: 30px;
 `;
 
@@ -44,6 +44,7 @@ class Greetings extends Component {
           Toggle message!
         </PrimaryButton>
         <Link to="/counter">To Counter!</Link>
+        <Link to="/apolloUsers">To Counter!</Link>
       </div>
     );
   };

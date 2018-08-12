@@ -8,6 +8,12 @@ import serialize from 'serialize-javascript';
 import Helmet from 'react-helmet';
 import thunk from 'redux-thunk';
 
+import { ApolloLink, concat } from 'apollo-link';
+import { ApolloClient } from 'apollo-client';
+import { InMemoryCache } from 'apollo-cache-inmemory';
+import { createHttpLink } from 'apollo-link-http';
+import { ApolloProvider, getDataFromTree } from 'react-apollo';
+
 import ReactRoot from './src/index';
 import Stripe from './src/utils/Stripe';
 
@@ -17,67 +23,111 @@ import postsReducerConstructor from './src/reducers/posts';
 import { fetchPosts } from './src/actions/posts';
 
 // it will be called from express, needs to be async because of the async action creators
-export default async path => {
-  // create a server side store
-  const store = createStore(
-    combineReducers({
-      message: messageReducerConstructor({
-        platform: 'server',
-        initialState: { text: 'Hello from the server!' }
+export default async (path, cookie) => {
+  const authMiddleware = new ApolloLink((operation, forward) => {
+    operation.setContext({
+      headers: {
+        Cookies: ''
+      }
+    });
+
+    return forward(operation);
+  });
+
+  try {
+    const client = new ApolloClient({
+      ssrMode: true,
+      link: createHttpLink({
+        uri: 'http://localhost:4050/graphql',
+        credentials: 'include',
+        headers: { cookie }
       }),
-      posts: postsReducerConstructor({
-        platform: 'server',
-        initialState: []
-      })
-    }),
-    applyMiddleware(thunk)
-  );
+      cache: new InMemoryCache()
+    });
 
-  const { dispatch, getState } = store;
+    // create a server side store
+    const store = createStore(
+      combineReducers({
+        message: messageReducerConstructor({
+          platform: 'server',
+          initialState: { text: 'Hello from the server!' }
+        }),
+        posts: postsReducerConstructor({
+          platform: 'server',
+          initialState: []
+        })
+      }),
+      applyMiddleware(thunk)
+    );
 
-  // manually dispatch an ajax request
-  await dispatch(fetchPosts());
+    const { dispatch, getState } = store;
 
-  // get the contents of the store and serialize it to prevent cross site scripting
-  const preloadedState = serialize(getState());
+    // manually dispatch an ajax request
+    await dispatch(fetchPosts());
 
-  const sheet = new ServerStyleSheet();
+    // create new server styleSheet
+    const sheet = new ServerStyleSheet();
 
-  // render html markup with styled components to collect all the style info
-  const reactHtml = renderToString(
-    sheet.collectStyles(
+    // get the neccessery queries from the rendered tree
+    await getDataFromTree(
       <Stripe>
-        <Provider store={store}>
-          <StaticRouter location={path} context={{}}>
-            <ReactRoot />
-          </StaticRouter>
-        </Provider>
+        <ApolloProvider client={client}>
+          <Provider store={store}>
+            <StaticRouter location={path} context={{}}>
+              <ReactRoot />
+            </StaticRouter>
+          </Provider>
+        </ApolloProvider>
       </Stripe>
-    )
-  );
+    );
 
-  // create styles tags based on the rendered markup
-  const styles = sheet.getStyleTags();
+    // render html markup with styled components to collect all the style info
+    const reactHtml = renderToString(
+      sheet.collectStyles(
+        <Stripe>
+          <ApolloProvider client={client}>
+            <Provider store={store}>
+              <StaticRouter location={path} context={{}}>
+                <ReactRoot />
+              </StaticRouter>
+            </Provider>
+          </ApolloProvider>
+        </Stripe>
+      )
+    );
 
-  // create meta tags based on the rendered markup
-  const helmet = Helmet.renderStatic();
+    // create styles tags based on the rendered markup
+    const styles = sheet.getStyleTags();
 
-  // inject React markup and Helmet tags to base html
-  // append redux store contents to the window object so the client can access
-  return `
-    <html>
-      <head>
-        ${helmet.meta.toString()}
-        ${styles}
-      </head>
-      <body>
-        <div id="root">${reactHtml}</div>
-        <div>
-          That is part of the original html!
-        </div>
-        <script>window.__PRELOADED_STATE__ = ${preloadedState}</script>
-        <script src="/assets/js/bundle.js"></script>
-      </body>
-    </html>
-  `;
+    // create meta tags based on the rendered markup
+    const helmet = Helmet.renderStatic();
+
+    // get the contents of the store and serialize it to prevent cross site scripting
+    const preloadedState = serialize(getState());
+
+    // get the apollo state
+    const preloadedClient = serialize(client.extract());
+
+    // inject React markup and Helmet tags to base html
+    // append redux store contents to the window object so the client can access
+    return `
+  <html>
+    <head>
+      ${helmet.meta.toString()}
+      ${styles}
+    </head>
+    <body>
+      <div id="root">${reactHtml}</div>
+      <div>
+        That is part of the original html!
+      </div>
+      <script>window.__APOLLO_STATE__ = ${preloadedClient}</script>
+      <script>window.__PRELOADED_STATE__ = ${preloadedState}</script>
+      <script src="/assets/js/bundle.js"></script>
+    </body>
+  </html>
+`;
+  } catch (r) {
+    console.log(r);
+  }
 };
